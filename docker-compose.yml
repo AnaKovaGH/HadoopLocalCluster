@@ -1,0 +1,63 @@
+version: "3"
+
+services:
+  namenode:
+    image: hdfs/namenode
+    volumes:
+      - namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - "9870:9870"
+  datanode1:
+    image: hdfs/datanode
+    volumes:
+      - datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    ports:
+      - "9864:9864"
+  datanode2:
+    image: hdfs/datanode
+    volumes:
+      - datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    ports:
+      - "9865:9865"
+  hive-server:
+    image: hive
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    volumes:
+      - ./data:/data
+    ports:
+      - "10000:10000"
+  hive-metastore:
+    image: hive
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 mysql:3306"
+    ports:
+      - "9083:9083"
+  presto-coordinator:
+    image: presto
+    ports:
+      - "8080:8080"
+  presto-worker:
+    image: presto
+    volumes:
+      - ./presto/worker:/home/presto/etc
+volumes:
+  namenode:
+  datanode:
