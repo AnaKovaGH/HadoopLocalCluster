@@ -14,7 +14,7 @@ services:
   datanode1:
     image: hdfs/datanode
     volumes:
-      - datanode:/hadoop/dfs/data
+      - datanode:/hadoop/dfs/data1
     env_file:
       - ./hadoop-hive.env
     environment:
@@ -24,7 +24,7 @@ services:
   datanode2:
     image: hdfs/datanode
     volumes:
-      - datanode:/hadoop/dfs/data
+      - datanode:/hadoop/dfs/data2
     env_file:
       - ./hadoop-hive.env
     environment:
@@ -36,9 +36,8 @@ services:
     env_file:
       - ./hadoop-hive.env
     environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
       SERVICE_PRECONDITION: "hive-metastore:9083"
-    volumes:
-      - ./data:/data
     ports:
       - "10000:10000"
   hive-metastore:
@@ -47,17 +46,21 @@ services:
       - ./hadoop-hive.env
     command: /opt/hive/bin/hive --service metastore
     environment:
-      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 mysql:3306"
+      SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 mysql:3306"
     ports:
       - "9083:9083"
+  mysql:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
   presto-coordinator:
     image: presto
     ports:
       - "8080:8080"
-  presto-worker:
-    image: presto
-    volumes:
-      - ./presto/worker:/home/presto/etc
 volumes:
   namenode:
   datanode:
