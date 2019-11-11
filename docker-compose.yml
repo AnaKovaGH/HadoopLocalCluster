@@ -2,7 +2,7 @@ version: "3"
 
 services:
   namenode:
-    image: hdfs/namenode
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
     volumes:
       - namenode:/hadoop/dfs/name
     environment:
@@ -10,29 +10,19 @@ services:
     env_file:
       - ./hadoop-hive.env
     ports:
-      - "9870:9870"
-  datanode1:
-    image: hdfs/datanode
+      - "50070:50070"
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
     volumes:
-      - datanode:/hadoop/dfs/data1
+      - datanode:/hadoop/dfs/data
     env_file:
       - ./hadoop-hive.env
     environment:
-      SERVICE_PRECONDITION: "namenode:9870"
+      SERVICE_PRECONDITION: "namenode:50070"
     ports:
-      - "9864:9864"
-  datanode2:
-    image: hdfs/datanode
-    volumes:
-      - datanode:/hadoop/dfs/data2
-    env_file:
-      - ./hadoop-hive.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
-    ports:
-      - "9865:9865"
+      - "50075:50075"
   hive-server:
-    image: hive
+    image: bde2020/hive:2.3.2-postgresql-metastore
     env_file:
       - ./hadoop-hive.env
     environment:
@@ -41,26 +31,21 @@ services:
     ports:
       - "10000:10000"
   hive-metastore:
-    image: hive
+    image: bde2020/hive:2.3.2-postgresql-metastore
     env_file:
       - ./hadoop-hive.env
     command: /opt/hive/bin/hive --service metastore
     environment:
-      SERVICE_PRECONDITION: "namenode:9870 datanode1:9864 mysql:3306"
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
     ports:
       - "9083:9083"
-  mysql:
-    image: mysql:latest
-    environment:
-      MYSQL_ROOT_PASSWORD: "root"
-    volumes:
-      - ./mysql:/var/lib/mysql
-    ports:
-      - "3306:3306"
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
   presto-coordinator:
-    image: presto
+    image: shawnzhu/prestodb:0.181
     ports:
       - "8080:8080"
+
 volumes:
   namenode:
   datanode:
